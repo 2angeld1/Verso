@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Translation {
+  id            String   @id @default(cuid())
+  sourceLang    String
+  sourceVersion String
+  targetLang    String
+  targetVersion String
+  status        String   @default("pending")
+  filesTotal    Int      @default(0)
+  filesDone     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
