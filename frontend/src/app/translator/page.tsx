@@ -20,7 +20,7 @@ export default function TranslatorPage() {
     code, setCode,
     repoUrl, setRepoUrl,
     submitting, translation, copied,
-    repoResult,
+    repoResult, wsStatus,
     recent,
     handleTranslate, handleDownload, handleCopy, handleKeyDown,
     handleSourceChange, handleTargetChange,
@@ -109,6 +109,9 @@ export default function TranslatorPage() {
             copied={copied}
             onCopy={handleCopy}
             onDownload={handleDownload}
+            wsStatus={wsStatus}
+            sourceLang={sourceLang}
+            targetLang={targetLang}
           />
         ) : (
           <RepoPanel
@@ -136,7 +139,7 @@ export default function TranslatorPage() {
               <Layers className="w-5 h-5" />
             )}
             {submitting
-              ? 'Traduciendo...'
+              ? (wsStatus?.message || 'Traduciendo...')
               : mode === 'repo'
               ? `Traducir Repo a ${targetLang}`
               : `Traducir a ${targetLang}`}
