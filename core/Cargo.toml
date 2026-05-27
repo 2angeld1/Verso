@@ -27,5 +27,9 @@ tree-sitter-c-sharp = "0.23"
 tree-sitter-ruby = "0.23"
 tree-sitter-php = "0.24"
 tree-sitter-cpp = "0.23"
+arborium-cobol = "2.10.0"
 tempfile = "3"
 walkdir = "2"
+
+[dev-dependencies]
+arborium-cobol = "2.10.0"

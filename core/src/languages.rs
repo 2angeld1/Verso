@@ -71,7 +71,7 @@ static LANGUAGES: once_cell::sync::Lazy<HashMap<&'static str, Lang>> = once_cell
         label: "Kotlin",
         target_versions: &["1.8", "2.0"],
         source_versions: &["1.6", "1.8", "2.0"],
-        can_translate_to: &["Java", "Python", "JavaScript", "Go", "TypeScript", "COBOL", "C++"],
+        can_translate_to: &["Java", "Python", "JavaScript", "Go", "TypeScript", "Dart", "COBOL", "C++"],
         target_lang: "Kotlin",
     });
     m.insert("typescript", Lang {
@@ -95,6 +95,20 @@ static LANGUAGES: once_cell::sync::Lazy<HashMap<&'static str, Lang>> = once_cell
         can_translate_to: &["Python", "Java", "C#", "Go", "Rust", "PHP", "JavaScript", "TypeScript", "COBOL"],
         target_lang: "C++",
     });
+    m.insert("visualbasic", Lang {
+        label: "VB6/VB.NET",
+        target_versions: &[""],
+        source_versions: &["VB6", "VB.NET"],
+        can_translate_to: &["Python", "Java", "C#", "Go", "Rust", "PHP", "JavaScript", "TypeScript", "COBOL", "C++"],
+        target_lang: "C#",
+    });
+    m.insert("dart", Lang {
+        label: "Dart/Flutter",
+        target_versions: &["3.x"],
+        source_versions: &["2.x", "3.x"],
+        can_translate_to: &["Python", "JavaScript", "Go", "Java", "Rust", "C#", "PHP", "TypeScript", "COBOL", "C++", "Kotlin"],
+        target_lang: "Dart",
+    });
     m
 });
 
@@ -109,6 +123,10 @@ pub fn normalize(name: &str) -> String {
         n if n == "golang" || n == "go" => "go".to_string(),
         n if n == "kt" || n == "kotlin" => "kotlin".to_string(),
         n if n == "rb" || n == "ruby" => "ruby".to_string(),
+        n if n == "cobol" || n == "cbl" || n == "cob" => "cobol".to_string(),
+        n if n == "objective c" || n == "objectivec" || n == "objc" || n == "obj c" => "objectivec".to_string(),
+        n if n == "dart" || n == "flutter" => "dart".to_string(),
+        n if n == "vb" || n == "vb6" || n == "vb.net" || n == "visual basic" || n == "visualbasic" || n == "vba" => "visualbasic".to_string(),
         n => n.to_string(),
     }
 }

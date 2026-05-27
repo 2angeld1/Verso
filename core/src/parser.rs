@@ -17,6 +17,7 @@ fn get_language(name: &str) -> Option<Language> {
         "C#" => Some(tree_sitter_c_sharp::LANGUAGE.into()),
         "Ruby" => Some(tree_sitter_ruby::LANGUAGE.into()),
         "C++" => Some(tree_sitter_cpp::LANGUAGE.into()),
+        "COBOL" => Some(arborium_cobol::language().into()),
         _ => None,
     }
 }
@@ -25,7 +26,7 @@ impl LanguageDetector {
     pub fn new() -> Self {
         let mut parsers = Vec::new();
         let names = [
-            "PHP", "Python", "JavaScript", "TypeScript", "TSX", "Rust",
+            "Python", "JavaScript", "TypeScript", "TSX", "Rust",
             "Go", "Java", "C#", "Ruby", "C++",
         ];
 
