@@ -26,11 +26,12 @@ pub async fn run(req: Request) -> Result<Response, String> {
     let source_lang = if req.source_lang.is_empty() {
         crate::detect::detect_language(&req.source)
     } else {
-        req.source_lang.clone()
+        crate::languages::normalize(&req.source_lang)
     };
+    let target_lang = crate::languages::normalize(&req.target_lang);
 
     // 1. Try cache
-    if let Some(cached) = crate::cache::get(&req.source, &source_lang, &req.target_lang) {
+    if let Some(cached) = crate::cache::get(&req.source, &source_lang, &target_lang) {
         let lines_output = count_lines(&cached);
         return Ok(Response {
             result: cached,
@@ -46,10 +47,10 @@ pub async fn run(req: Request) -> Result<Response, String> {
     if let Some(key) = &req.gemini_key {
         if !key.is_empty() {
             let model = req.gemini_model.as_deref().unwrap_or("gemini-2.0-flash");
-            match crate::ai::gemini_translate(&req.source, &source_lang, &req.target_lang, key, model).await {
+            match crate::ai::gemini_translate(&req.source, &source_lang, &target_lang, key, model).await {
                 Ok(text) => {
                     let lines_output = count_lines(&text);
-                    crate::cache::set(&req.source, &source_lang, &req.target_lang, &text);
+                    crate::cache::set(&req.source, &source_lang, &target_lang, &text);
                     return Ok(Response {
                         result: text,
                         lines_input,
@@ -65,10 +66,10 @@ pub async fn run(req: Request) -> Result<Response, String> {
     if let Some(key) = &req.cohere_key {
         if !key.is_empty() {
             let model = req.cohere_model.as_deref().unwrap_or("command-r");
-            match crate::ai::cohere_translate(&req.source, &source_lang, &req.target_lang, key, model).await {
+            match crate::ai::cohere_translate(&req.source, &source_lang, &target_lang, key, model).await {
                 Ok(text) => {
                     let lines_output = count_lines(&text);
-                    crate::cache::set(&req.source, &source_lang, &req.target_lang, &text);
+                    crate::cache::set(&req.source, &source_lang, &target_lang, &text);
                     return Ok(Response {
                         result: text,
                         lines_input,
@@ -82,7 +83,7 @@ pub async fn run(req: Request) -> Result<Response, String> {
     }
 
     // 3. Try rules-based
-    match crate::rules::translate(&req.source, &source_lang, &req.target_lang) {
+    match crate::rules::translate(&req.source, &source_lang, &target_lang) {
         Some(text) => {
             let lines_output = count_lines(&text);
             crate::cache::set(&req.source, &source_lang, &req.target_lang, &text);

@@ -98,6 +98,21 @@ static LANGUAGES: once_cell::sync::Lazy<HashMap<&'static str, Lang>> = once_cell
     m
 });
 
+pub fn normalize(name: &str) -> String {
+    match name.to_lowercase().replace('-', " ").replace('_', " ").trim() {
+        n if n == "c#" || n == "c sharp" || n == "csharp" => "csharp".to_string(),
+        n if n == "c++" || n == "cpp" || n == "c plus plus" => "cpp".to_string(),
+        n if n == "js" || n == "javascript" => "javascript".to_string(),
+        n if n == "ts" || n == "typescript" => "typescript".to_string(),
+        n if n == "py" || n == "python" => "python".to_string(),
+        n if n == "rs" || n == "rust" => "rust".to_string(),
+        n if n == "golang" || n == "go" => "go".to_string(),
+        n if n == "kt" || n == "kotlin" => "kotlin".to_string(),
+        n if n == "rb" || n == "ruby" => "ruby".to_string(),
+        n => n.to_string(),
+    }
+}
+
 pub fn get_all() -> Value {
     let mut map = serde_json::Map::new();
     for (key, lang) in LANGUAGES.iter() {

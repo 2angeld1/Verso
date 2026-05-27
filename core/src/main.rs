@@ -1,4 +1,5 @@
 mod translate;
+mod translate_repo;
 mod ai;
 mod rules;
 mod detect;
@@ -30,6 +31,18 @@ struct DetectRequest {
     source: String,
 }
 
+#[derive(Deserialize)]
+struct TranslateRepoRequest {
+    repo_url: String,
+    source_lang: String,
+    target_lang: String,
+    branch: Option<String>,
+    gemini_key: Option<String>,
+    cohere_key: Option<String>,
+    gemini_model: Option<String>,
+    cohere_model: Option<String>,
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
@@ -38,6 +51,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/translate", post(handle_translate))
+        .route("/translate-repo", post(handle_translate_repo))
         .route("/detect", post(handle_detect))
         .route("/languages", get(handle_languages))
         .route("/health", get(handle_health))
@@ -68,6 +82,30 @@ async fn handle_translate(
     };
 
     match translate::run(internal_req).await {
+        Ok(resp) => Ok(Json(resp)),
+        Err(e) => Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(serde_json::json!({"error": e})),
+        )),
+    }
+}
+
+async fn handle_translate_repo(
+    State(_state): State<Arc<AppState>>,
+    Json(req): Json<TranslateRepoRequest>,
+) -> Result<Json<translate_repo::RepoResponse>, (StatusCode, Json<serde_json::Value>)> {
+    let internal_req = translate_repo::RepoRequest {
+        repo_url: req.repo_url,
+        source_lang: req.source_lang,
+        target_lang: req.target_lang,
+        branch: req.branch,
+        gemini_key: req.gemini_key.or_else(|| std::env::var("GEMINI_API_KEY").ok()),
+        cohere_key: req.cohere_key.or_else(|| std::env::var("COHERE_API_KEY").ok()),
+        gemini_model: req.gemini_model,
+        cohere_model: req.cohere_model,
+    };
+
+    match translate_repo::run(internal_req).await {
         Ok(resp) => Ok(Json(resp)),
         Err(e) => Err((
             StatusCode::UNPROCESSABLE_ENTITY,
