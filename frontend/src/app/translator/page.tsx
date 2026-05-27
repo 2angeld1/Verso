@@ -18,6 +18,7 @@ import {
   Brain,
   Database,
   Puzzle,
+  Download,
 } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
@@ -120,40 +121,58 @@ export default function TranslatorPage() {
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
 
   const isSameLang = sourceLang === targetLang
-  const currentSource = languages.find((l) => l.name === sourceLang)
-  const compatibleTargets = currentSource?.canTranslateTo || [sourceLang]
-  const showTargetVersion = targetLang === sourceLang || targetLang === currentSource?.targetLang
+  const isAutoDetect = sourceLang === '__auto__'
+  const currentSource = isAutoDetect ? null : languages.find((l) => l.name === sourceLang)
+  const compatibleTargets = currentSource?.canTranslateTo || languages.map(l => l.name)
+  const showTargetVersion = true
 
   useEffect(() => {
     fetch('/api/languages')
-      .then((r) => r.json())
+      .then(async (r) => {
+        const text = await r.text()
+        return text ? JSON.parse(text) : []
+      })
       .then((data: Language[]) => {
-        setLanguages(data)
+        setLanguages(data || [])
+        setLoading(false)
+      })
+      .catch((e) => {
+        console.error('Error cargando lenguajes:', e)
+        setLanguages([])
         setLoading(false)
       })
   }, [])
 
   useEffect(() => {
     fetch('/api/translate')
-      .then((r) => r.json())
-      .then(setRecent)
+      .then(async (r) => {
+        const text = await r.text()
+        return text ? JSON.parse(text) : []
+      })
+      .then((data) => setRecent(data || []))
+      .catch((e) => {
+        console.error('Error cargando historial:', e)
+        setRecent([])
+      })
   }, [])
 
   useEffect(() => {
     if (sourceLang === 'JavaScript' || sourceLang === 'TypeScript') {
       setCode(JS_CODE)
-    } else {
+    } else if (sourceLang !== '__auto__') {
       setCode(PHP_CODE)
     }
 
-    if (!compatibleTargets.includes(targetLang)) {
+    if (sourceLang !== '__auto__' && !compatibleTargets.includes(targetLang)) {
       setTargetLang(sourceLang)
       setTargetVersion(currentSource?.versions?.[0] || '')
     }
   }, [sourceLang])
 
   useEffect(() => {
-    setSourceVersion(currentSource?.sourceVersions?.[0] || currentSource?.versions?.[0] || '')
+    if (currentSource) {
+      setSourceVersion(currentSource?.sourceVersions?.[0] || currentSource?.versions?.[0] || '')
+    }
   }, [sourceLang])
 
   const currentTarget = languages.find((l) => l.name === targetLang)
@@ -164,7 +183,7 @@ export default function TranslatorPage() {
     setSelectedFile(null)
     try {
       const body: any = {
-        sourceLang,
+        sourceLang: isAutoDetect ? '' : sourceLang,
         sourceVersion,
         targetLang,
         targetVersion,
@@ -181,7 +200,9 @@ export default function TranslatorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      const data = await res.json()
+      const text = await res.text()
+      const data = text ? JSON.parse(text) : {}
+      
       if (!res.ok) {
         toast.error(data.error || 'Error al traducir')
         return
@@ -201,20 +222,37 @@ export default function TranslatorPage() {
     }
   }, [sourceLang, sourceVersion, targetLang, targetVersion, code, repoUrl, mode])
 
-  const handleCopy = () => {
-    let text = ''
+  const getTranslatedText = (): string => {
     if (translation?.result && typeof translation.result === 'string') {
-      text = translation.result
-    } else if (translation?.result && typeof translation.result === 'object') {
-      const repoResult = translation.result as RepoResult
-      if (selectedFile) {
-        text = repoResult.files.find(f => f.path === selectedFile)?.translated || ''
-      } else {
-        text = repoResult.files.map(f =>
-          `// === ${f.path} ===\n${f.translated}`
-        ).join('\n\n')
-      }
+      return translation.result
     }
+    if (repoResult) {
+      if (selectedFile) {
+        return repoResult.files.find(f => f.path === selectedFile)?.translated || ''
+      }
+      return repoResult.files.map(f =>
+        `// === ${f.path} ===\n${f.translated}`
+      ).join('\n\n')
+    }
+    return ''
+  }
+
+  const handleDownload = () => {
+    const text = getTranslatedText()
+    if (!text) return
+    const ext = targetLang === 'TypeScript' ? 'ts' : targetLang.toLowerCase()
+    const blob = new Blob([text], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `translated.${ext}`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Archivo descargado')
+  }
+
+  const handleCopy = () => {
+    const text = getTranslatedText()
     if (text) {
       navigator.clipboard.writeText(text)
       setCopied(true)
@@ -302,6 +340,7 @@ export default function TranslatorPage() {
                 onChange={(e) => setSourceLang(e.target.value)}
                 className="w-full h-14 bg-code-800 border border-code-700 rounded-2xl px-4 pr-10 text-sm font-medium text-white appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
+                <option value="__auto__">🔍 Auto-detectar</option>
                 {languages.map((l) => (
                   <option key={l.name}>{l.name}</option>
                 ))}
@@ -341,36 +380,17 @@ export default function TranslatorPage() {
 
         {/* Version Selectors */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          <div>
-            <label className="block text-sm font-semibold text-secondary-400 mb-2">Versión Origen</label>
-            <div className="flex flex-wrap gap-2">
-              {currentSource?.sourceVersions?.map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setSourceVersion(v)}
-                  className={clsx(
-                    'px-4 py-2 rounded-xl text-sm font-mono font-medium border transition-all',
-                    sourceVersion === v
-                      ? 'bg-primary-600 text-white border-primary-600'
-                      : 'bg-code-800 text-secondary-400 border-code-700 hover:border-primary-600 hover:text-white'
-                  )}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
-          {showTargetVersion && (
+          {!isAutoDetect && (
             <div>
-              <label className="block text-sm font-semibold text-secondary-400 mb-2">Versión Destino</label>
+              <label className="block text-sm font-semibold text-secondary-400 mb-2">Versión Origen</label>
               <div className="flex flex-wrap gap-2">
-                {currentTarget?.versions?.map((v) => (
+                {currentSource?.sourceVersions?.map((v) => (
                   <button
                     key={v}
-                    onClick={() => setTargetVersion(v)}
+                    onClick={() => setSourceVersion(v)}
                     className={clsx(
                       'px-4 py-2 rounded-xl text-sm font-mono font-medium border transition-all',
-                      targetVersion === v
+                      sourceVersion === v
                         ? 'bg-primary-600 text-white border-primary-600'
                         : 'bg-code-800 text-secondary-400 border-code-700 hover:border-primary-600 hover:text-white'
                     )}
@@ -381,6 +401,25 @@ export default function TranslatorPage() {
               </div>
             </div>
           )}
+          <div className={isAutoDetect ? 'md:col-span-2' : ''}>
+            <label className="block text-sm font-semibold text-secondary-400 mb-2">Versión Destino</label>
+            <div className="flex flex-wrap gap-2">
+              {currentTarget?.versions?.map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setTargetVersion(v)}
+                  className={clsx(
+                    'px-4 py-2 rounded-xl text-sm font-mono font-medium border transition-all',
+                    targetVersion === v
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'bg-code-800 text-secondary-400 border-code-700 hover:border-primary-600 hover:text-white'
+                  )}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Code Input or Repo URL */}
@@ -406,14 +445,23 @@ export default function TranslatorPage() {
                       {methodConfig.label}
                     </span>
                   )}
-                  {translation?.result && typeof translation.result === 'string' && (
-                    <button
-                      onClick={handleCopy}
-                      className="flex items-center gap-1.5 text-xs text-secondary-500 hover:text-white transition-colors"
-                    >
-                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copied ? 'Copiado' : 'Copiar'}
-                    </button>
+                  {(translation?.result && typeof translation.result === 'string') && (
+                    <>
+                      <button
+                        onClick={handleDownload}
+                        className="flex items-center gap-1.5 text-xs text-secondary-500 hover:text-white transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Descargar
+                      </button>
+                      <button
+                        onClick={handleCopy}
+                        className="flex items-center gap-1.5 text-xs text-secondary-500 hover:text-white transition-colors"
+                      >
+                        {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copied ? 'Copiado' : 'Copiar'}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -459,6 +507,13 @@ export default function TranslatorPage() {
                       <span className="text-emerald-400">{repoResult.translated} traducidos</span>
                       {repoResult.skipped > 0 && <span className="text-secondary-500">· {repoResult.skipped} omitidos</span>}
                       {repoResult.errors > 0 && <span className="text-red-400">· {repoResult.errors} errores</span>}
+                      <button
+                        onClick={() => { setSelectedFile(null); setTimeout(handleDownload, 50) }}
+                        className="ml-auto flex items-center gap-1 text-[10px] text-primary-400 hover:text-white transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        Todo
+                      </button>
                     </div>
                     <div className="space-y-0.5 max-h-64 overflow-y-auto">
                       {repoResult.files.map((f) => (
@@ -497,6 +552,13 @@ export default function TranslatorPage() {
                         ) : null
                       })()}
                     </div>
+                    <button
+                      onClick={handleDownload}
+                      className="flex items-center gap-1.5 text-xs text-secondary-500 hover:text-white transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Descargar
+                    </button>
                     <button
                       onClick={handleCopy}
                       className="flex items-center gap-1.5 text-xs text-secondary-500 hover:text-white transition-colors"

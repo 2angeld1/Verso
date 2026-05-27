@@ -45,9 +45,6 @@ export async function POST(request: Request) {
           status: 'completed',
           filesDone: data.translated,
           filesTotal: data.total_files,
-          result: data.files?.map((f: any) =>
-            `// === ${f.path} ===\n${f.translated}`
-          ).join('\n\n') || '',
         },
       })
 
