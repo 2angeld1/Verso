@@ -49,11 +49,18 @@ fn make_key(source: &str, source_lang: &str, target_lang: &str) -> String {
 pub fn get(source: &str, source_lang: &str, target_lang: &str) -> Option<String> {
     let key = make_key(source, source_lang, target_lang);
     let cache = CACHE.lock().unwrap();
-    cache.get(&key).map(|s| s.to_string())
+    let result = cache.get(&key).map(|s| s.to_string());
+    if result.is_some() {
+        tracing::debug!("cache HIT  key={}", key);
+    } else {
+        tracing::debug!("cache MISS key={}", key);
+    }
+    result
 }
 
 pub fn set(source: &str, source_lang: &str, target_lang: &str, result: &str) {
     let key = make_key(source, source_lang, target_lang);
     let mut cache = CACHE.lock().unwrap();
-    cache.set(key, result.to_string());
+    cache.set(key.clone(), result.to_string());
+    tracing::debug!("cache SET  key={}", key);
 }

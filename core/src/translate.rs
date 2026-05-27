@@ -24,15 +24,20 @@ pub struct Response {
 pub async fn run(req: Request) -> Result<Response, String> {
     let lines_input = count_lines(&req.source);
     let source_lang = if req.source_lang.is_empty() {
-        crate::detect::detect_language(&req.source)
+        let detected = crate::detect::detect_language(&req.source);
+        tracing::info!(source_lang = %detected, "language auto-detected");
+        detected
     } else {
         crate::languages::normalize(&req.source_lang)
     };
     let target_lang = crate::languages::normalize(&req.target_lang);
 
+    tracing::info!(source_lang = %source_lang, target_lang = %target_lang, lines = lines_input, "translate start");
+
     // 1. Try cache
     if let Some(cached) = crate::cache::get(&req.source, &source_lang, &target_lang) {
         let lines_output = count_lines(&cached);
+        tracing::info!("cache HIT");
         return Ok(Response {
             result: cached,
             lines_input,
@@ -40,6 +45,7 @@ pub async fn run(req: Request) -> Result<Response, String> {
             method: "cache".to_string(),
         });
     }
+    tracing::info!("cache MISS");
 
     // 2. Try AI cascade
     let mut last_error = String::new();
@@ -47,10 +53,12 @@ pub async fn run(req: Request) -> Result<Response, String> {
     if let Some(key) = &req.gemini_key {
         if !key.is_empty() {
             let model = req.gemini_model.as_deref().unwrap_or("gemini-2.0-flash");
+            tracing::info!(model = %model, "trying gemini");
             match crate::ai::gemini_translate(&req.source, &source_lang, &target_lang, key, model).await {
                 Ok(text) => {
                     let lines_output = count_lines(&text);
                     crate::cache::set(&req.source, &source_lang, &target_lang, &text);
+                    tracing::info!("gemini SUCCESS");
                     return Ok(Response {
                         result: text,
                         lines_input,
@@ -58,7 +66,10 @@ pub async fn run(req: Request) -> Result<Response, String> {
                         method: format!("gemini:{}", model),
                     });
                 }
-                Err(e) => last_error = format!("gemini: {}", e),
+                Err(e) => {
+                    tracing::warn!("gemini FAILED: {}", e);
+                    last_error = format!("gemini: {}", e);
+                }
             }
         }
     }
@@ -66,10 +77,12 @@ pub async fn run(req: Request) -> Result<Response, String> {
     if let Some(key) = &req.cohere_key {
         if !key.is_empty() {
             let model = req.cohere_model.as_deref().unwrap_or("command-r");
+            tracing::info!(model = %model, "trying cohere");
             match crate::ai::cohere_translate(&req.source, &source_lang, &target_lang, key, model).await {
                 Ok(text) => {
                     let lines_output = count_lines(&text);
                     crate::cache::set(&req.source, &source_lang, &target_lang, &text);
+                    tracing::info!("cohere SUCCESS");
                     return Ok(Response {
                         result: text,
                         lines_input,
@@ -77,16 +90,21 @@ pub async fn run(req: Request) -> Result<Response, String> {
                         method: format!("cohere:{}", model),
                     });
                 }
-                Err(e) => last_error = format!("cohere: {}", e),
+                Err(e) => {
+                    tracing::warn!("cohere FAILED: {}", e);
+                    last_error = format!("cohere: {}", e);
+                }
             }
         }
     }
 
     // 3. Try rules-based
+    tracing::info!("trying rules");
     match crate::rules::translate(&req.source, &source_lang, &target_lang) {
         Some(text) => {
             let lines_output = count_lines(&text);
-            crate::cache::set(&req.source, &source_lang, &req.target_lang, &text);
+            crate::cache::set(&req.source, &source_lang, &target_lang, &text);
+            tracing::info!("rules SUCCESS");
             return Ok(Response {
                 result: text,
                 lines_input,
@@ -94,9 +112,13 @@ pub async fn run(req: Request) -> Result<Response, String> {
                 method: "rules".to_string(),
             });
         }
-        None => last_error = format!("rules: no match, last: {}", last_error),
+        None => {
+            tracing::warn!("rules no match");
+            last_error = format!("rules: no match, last: {}", last_error);
+        }
     }
 
+    tracing::error!("translate FAILED: {}", last_error);
     Err(last_error)
 }
 

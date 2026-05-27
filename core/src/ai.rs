@@ -4,6 +4,7 @@ const GEMINI_BASE: &str = "https://generativelanguage.googleapis.com/v1beta/mode
 const COHERE_URL: &str = "https://api.cohere.com/v2/chat";
 
 pub async fn gemini_translate(source: &str, source_lang: &str, target_lang: &str, key: &str, model: &str) -> Result<String, String> {
+    tracing::debug!("gemini request: {} -> {} model={} input_len={}", source_lang, target_lang, model, source.len());
     let prompt = format!(
         "Translate the following code from {} to {}.\n\
          Return ONLY the translated code, no explanations, no markdown formatting.\n\
@@ -46,6 +47,7 @@ pub async fn gemini_translate(source: &str, source_lang: &str, target_lang: &str
 }
 
 pub async fn cohere_translate(source: &str, source_lang: &str, target_lang: &str, key: &str, model: &str) -> Result<String, String> {
+    tracing::debug!("cohere request: {} -> {} model={} input_len={}", source_lang, target_lang, model, source.len());
     let prompt = format!(
         "Translate the following code from {} to {}.\n\
          Return ONLY the translated code, no explanations, no markdown formatting.\n\

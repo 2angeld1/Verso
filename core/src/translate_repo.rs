@@ -107,6 +107,7 @@ pub async fn run(req: RepoRequest) -> Result<RepoResponse, String> {
         return Err(format!("Unsupported source language: {}", req.source_lang));
     }
 
+    tracing::info!(url = %req.repo_url, "cloning repo");
     let tmp = tempfile::tempdir().map_err(|e| format!("tempdir: {}", e))?;
     let repo_path = tmp.path().join("repo");
 
@@ -114,6 +115,8 @@ pub async fn run(req: RepoRequest) -> Result<RepoResponse, String> {
 
     let files = find_source_files(&repo_path, exts);
     let total = files.len();
+
+    tracing::info!(count = total, "source files found");
 
     if total == 0 {
         return Ok(RepoResponse {
@@ -228,22 +231,29 @@ async fn translate_file(
         cohere_model: cohere_model.map(|s| s.to_string()),
     };
 
+    tracing::info!(path = %rel_path, "translating file");
     match crate::translate::run(req).await {
-        Ok(resp) => FileResult {
-            path: rel_path,
-            translated: true,
-            error: None,
-            method: Some(resp.method),
-            lines_input,
-            lines_output: resp.lines_output,
-        },
-        Err(e) => FileResult {
-            path: rel_path,
-            translated: false,
-            error: Some(e),
-            method: None,
-            lines_input,
-            lines_output: 0,
-        },
+        Ok(resp) => {
+            tracing::info!(path = %rel_path, method = %resp.method, "file translated");
+            FileResult {
+                path: rel_path,
+                translated: true,
+                error: None,
+                method: Some(resp.method),
+                lines_input,
+                lines_output: resp.lines_output,
+            }
+        }
+        Err(e) => {
+            tracing::warn!(path = %rel_path, error = %e, "file translation failed");
+            FileResult {
+                path: rel_path,
+                translated: false,
+                error: Some(e),
+                method: None,
+                lines_input,
+                lines_output: 0,
+            }
+        }
     }
 }
