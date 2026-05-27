@@ -109,6 +109,34 @@ static LANGUAGES: once_cell::sync::Lazy<HashMap<&'static str, Lang>> = once_cell
         can_translate_to: &["Python", "JavaScript", "Go", "Java", "Rust", "C#", "PHP", "TypeScript", "COBOL", "C++", "Kotlin"],
         target_lang: "Dart",
     });
+    m.insert("jquery", Lang {
+        label: "jQuery",
+        target_versions: &["ES6"],
+        source_versions: &["1.x", "2.x", "3.x"],
+        can_translate_to: &["JavaScript", "React", "Vue"],
+        target_lang: "JavaScript",
+    });
+    m.insert("react", Lang {
+        label: "React",
+        target_versions: &["18", "19"],
+        source_versions: &["15", "16", "17", "18"],
+        can_translate_to: &["React"],
+        target_lang: "React",
+    });
+    m.insert("mysql", Lang {
+        label: "MySQL",
+        target_versions: &["8.0", "8.4"],
+        source_versions: &["5.x", "8.0"],
+        can_translate_to: &["PostgreSQL", "SQLite"],
+        target_lang: "PostgreSQL",
+    });
+    m.insert("postgresql", Lang {
+        label: "PostgreSQL",
+        target_versions: &["15", "16", "17"],
+        source_versions: &["13", "14", "15", "16", "17"],
+        can_translate_to: &["MySQL", "SQLite"],
+        target_lang: "PostgreSQL",
+    });
     m
 });
 
@@ -127,6 +155,10 @@ pub fn normalize(name: &str) -> String {
         n if n == "objective c" || n == "objectivec" || n == "objc" || n == "obj c" => "objectivec".to_string(),
         n if n == "dart" || n == "flutter" => "dart".to_string(),
         n if n == "vb" || n == "vb6" || n == "vb.net" || n == "visual basic" || n == "visualbasic" || n == "vba" => "visualbasic".to_string(),
+        n if n == "jquery" => "jquery".to_string(),
+        n if n == "react" || n == "reactjs" => "react".to_string(),
+        n if n == "mysql" || n == "mysqli" => "mysql".to_string(),
+        n if n == "pg" || n == "postgres" || n == "postgresql" => "postgresql".to_string(),
         n => n.to_string(),
     }
 }
