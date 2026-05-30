@@ -23,13 +23,13 @@ El mayor riesgo de Verso es "El problema de la cura": si migras el código de un
 > **El Modelo Híbrido (Recomendado)**
 > Vende suscripciones mensuales a agencias para el trabajo del día a día, y cobra "High-Ticket" por proyectos Enterprise.
 
-### A. B2B para Software Factories (Suscripción Mensual)
-En lugar de vender al banco (el cliente final), véndele Verso a **agencias de desarrollo y consultoras**. Ellos hacen migraciones todo el tiempo. Una suscripción de **$499 USD/mes** para una agencia les resulta baratísima si les ahorra 200 horas de programación mensuales.
+### A. B2B para Software Factories (Licencia Mensual)
+En lugar de vender al banco (el cliente final), véndele Verso a **agencias de desarrollo y consultoras**. Ellos hacen migraciones todo el tiempo. Una licencia de **$1,200 USD/mes** para una agencia les resulta una ganga absoluta si lo comparas con pagarle a 2 o 3 desarrolladores Senior durante meses para refactorizar y corregir errores manualmente. Recuperan el costo de la licencia en la primera semana de uso.
 
-### B. Enterprise Pay-As-You-Go (Pago por volumen)
-Para corporaciones grandes, no vendas suscripciones. Vende el acceso a la traducción masiva mediante créditos.
-- **Ejemplo:** $0.05 centavos de dólar por línea de código traducida. 
-- Si un banco necesita migrar 500,000 líneas de código, te pagan **$25,000 USD** de golpe. Cumples el objetivo, te retiras con un margen del 90%, y no te importa si cancelan porque ya cobraste el valor real.
+### B. Venta Directa a Corporaciones y Bancos (Licencia Enterprise o Alto Valor)
+Para corporaciones gigantes (bancos, aseguradoras, Fortune 500), **cobrarles $1,200 al mes es un error porque es demasiado barato**. Si les cobras poco por migrar un sistema central que les tomaría 3 años y 2 millones de dólares hacerlo a mano, pensarán que Verso es un software "de juguete" o inseguro. Para ellos aplicas dos modalidades:
+1. **Pago por volumen (Pay-As-You-Go):** Les cobras $0.05 a $0.10 centavos de dólar por cada línea de código traducida. Si un banco necesita migrar 500,000 líneas de código, te pagan **$25,000 a $50,000 USD** de golpe. Cumples el objetivo, te retiras con un margen del 90%, y no te importa si cancelan porque ya cobraste el valor real.
+2. **Licencia Enterprise Anual:** Si insisten en licenciar la herramienta, les cobras un paquete de **$30,000 a $50,000 USD anuales**. Este precio alto se justifica porque incluirá soporte prioritario, Acuerdos de Nivel de Servicio (SLAs), posibles despliegues en servidores privados (On-Premise) por seguridad, y auditorías.
 
 ### C. Modernización Continua (SaaS a largo plazo)
 Posiciona a Verso como una herramienta de mantenimiento. El software envejece cada 6 meses (cambios de versiones de React, Next, Node, Java). Verso se conecta al repositorio y automáticamente abre *Pull Requests* para refactorizar código deprecado y mantener la deuda técnica en cero. **Esto genera ingresos recurrentes infinitos.**
@@ -89,10 +89,39 @@ Durante tus encuestas, es 100% seguro que escuches a desarrolladores decir: *"Es
    * *La objeción:* "Claude es muy inteligente."
    * *El contraargumento de Verso:* Sí, Claude es excelente para 1, 5 o 10 archivos. Pero si tienes un proyecto heredado (Legacy) con 500 archivos y dependencias cruzadas, **no puedes meterlo todo en el chat de Claude**. Si lo haces poco a poco, Claude pierde el contexto de cómo se llamaban las variables en el archivo 1 cuando va por el archivo 50. Verso mapea la estructura completa del repositorio y mantiene la coherencia.
 
-2. **La trampa del Copy-Paste manual:**
-   * *La objeción:* "Lo hago poco a poco."
-   * *El contraargumento de Verso:* Migrar un proyecto grande "poco a poco" requiere que un desarrollador Senior (que cobra caro) pase semanas copiando código, pegándolo en el chat, esperando la respuesta, creando el archivo nuevo, pegando la respuesta y corrigiendo errores de formato. **Verso automatiza el pipeline completo**: lee el repositorio, traduce masivamente en paralelo, aplica reglas duras (Rust) y te devuelve la estructura de carpetas lista en minutos.
+2. **La trampa de los Agentes Genéricos y el costo de Tokens:**
+   * *La objeción:* "No hago copy-paste, uso un agente (como Cursor) o un script que le pasa el repo a la IA."
+   * *El contraargumento de Verso:* Es cierto, puedes poner a un agente a recorrer todo el código. El problema es que pedirle a la IA pura que traduzca "de Objective-C a Swift" un proyecto entero **consume una cantidad brutal de tokens y dinero** porque la IA recalcula la lógica en cada archivo, incluso si son funciones repetidas. Además, por sus alucinaciones, requiere tener a **2 o 3 programadores** supervisando el desastre para llegar a la fecha de lanzamiento. 
+   * **Con Verso:** Gracias a la caché y al validador en Rust, los costos de tokens caen drásticamente (las funciones idénticas no pagan tokens dos veces). Y gracias a que lee la documentación oficial, el nivel de precisión es tan alto que **solo necesitas a 1 programador** supervisando el trabajo final, reduciendo radicalmente los costos de nómina.
 
-3. **Determinismo vs. Alucinación:**
+97. 3. **Determinismo vs. Alucinación:**
    * *La objeción:* "La IA traduce bien la lógica."
    * *El contraargumento de Verso:* La IA es probabilística, a veces se inventa librerías que no existen (alucina). Verso es **Híbrido**. Usa la IA para entender la semántica, pero pasa el resultado por un motor de reglas estrictas (Rust) para garantizar la correctitud sintáctica, y usa caché para que las funciones repetidas se traduzcan exactamente igual siempre. Claude no tiene reglas estrictas, solo adivina.
+
+---
+
+## 6. Validación en Comunidades (Borrador para Skool)
+
+Para obtener *feedback* real sin revelar tu "salsa secreta" ni sonar como si estuvieras vendiendo algo, puedes usar este borrador en comunidades de programadores como Skool, Reddit (r/programming) o Facebook Groups.
+
+**Título propuesto:** *Para los Devs: ¿Qué tanto les cuesta/duele hacer migraciones de proyectos enteros (entre lenguajes o de versiones muy antiguas a nuevas)?*
+
+**Cuerpo de la publicación:**
+> Hola comunidad,
+>
+> Últimamente he estado investigando sobre la deuda técnica en las empresas y quería saber su experiencia real en las trincheras. 
+> 
+> Cuando les toca agarrar un proyecto *legacy* (por ejemplo, pasar un monolito viejo de PHP 5.6 a Node.js, o actualizar un repo gigante de Angular viejo a uno nuevo), ¿cómo lo están resolviendo hoy en día su equipo o agencia?
+>
+> 1. ¿Lo reescriben todo a mano desde cero (con el tiempo y costo que eso implica)?
+> 2. ¿Ponen a los devs a hacer copy-paste usando Claude/Cursor archivo por archivo (peleando con el límite de contexto)?
+> 3. ¿Usan algún script propio?
+>
+> Sé que usar agentes de IA suena bien en teoría, pero en la práctica he visto que se comen el presupuesto en tokens, alucinan inventándose librerías y al final necesitas a 2 o 3 Seniors arreglando el desastre.
+>
+> Me interesa leer sus experiencias. ¿Qué es lo que más odian de este proceso? ¿Lo cobran por hora o por proyecto? ¡Los leo! 
+
+**¿Por qué funciona este post?**
+1. **Genera Empatía:** Estás tocando uno de los temas más odiados por los devs (el código heredado). Se van a desahogar contigo.
+2. **Planta la semilla del problema de la IA genérica:** Al mencionar sutilmente que Claude/Cursor tienen límites de contexto y alucinan, los predispones a admitir que sí, la IA pura no es mágica y tiene fallas en repositorios enteros.
+3. **Mide la temperatura del mercado:** Si ves que mucha gente responde *"Es un infierno, perdemos meses en esto"*, tienes tu mercado 100% validado para entrar con el precio de $1,200.
