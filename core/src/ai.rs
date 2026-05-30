@@ -3,13 +3,20 @@ use serde_json::json;
 const GEMINI_BASE: &str = "https://generativelanguage.googleapis.com/v1beta/models";
 const COHERE_URL: &str = "https://api.cohere.com/v2/chat";
 
-pub async fn gemini_translate(source: &str, source_lang: &str, target_lang: &str, key: &str, model: &str) -> Result<String, String> {
+pub async fn gemini_translate(source: &str, source_lang: &str, target_lang: &str, key: &str, model: &str, migration_docs: &str) -> Result<String, String> {
     tracing::debug!("gemini request: {} -> {} model={} input_len={}", source_lang, target_lang, model, source.len());
+    
+    let docs_context = if !migration_docs.is_empty() {
+        format!("\n\nCRITICAL OFFICIAL MIGRATION RULES TO FOLLOW:\n{}", migration_docs)
+    } else {
+        String::new()
+    };
+
     let prompt = format!(
         "Translate the following code from {} to {}.\n\
          Return ONLY the translated code, no explanations, no markdown formatting.\n\
-         Keep the same functionality, logic, and comments.\n\n{}",
-        source_lang, target_lang, source
+         Keep the same functionality, logic, and comments.{}\n\n{}",
+        source_lang, target_lang, docs_context, source
     );
 
     let body = json!({
@@ -46,13 +53,20 @@ pub async fn gemini_translate(source: &str, source_lang: &str, target_lang: &str
     Ok(clean_code_block(text))
 }
 
-pub async fn cohere_translate(source: &str, source_lang: &str, target_lang: &str, key: &str, model: &str) -> Result<String, String> {
+pub async fn cohere_translate(source: &str, source_lang: &str, target_lang: &str, key: &str, model: &str, migration_docs: &str) -> Result<String, String> {
     tracing::debug!("cohere request: {} -> {} model={} input_len={}", source_lang, target_lang, model, source.len());
+    
+    let docs_context = if !migration_docs.is_empty() {
+        format!("\n\nCRITICAL OFFICIAL MIGRATION RULES TO FOLLOW:\n{}", migration_docs)
+    } else {
+        String::new()
+    };
+
     let prompt = format!(
         "Translate the following code from {} to {}.\n\
          Return ONLY the translated code, no explanations, no markdown formatting.\n\
-         Keep the same functionality, logic, and comments.\n\n{}",
-        source_lang, target_lang, source
+         Keep the same functionality, logic, and comments.{}\n\n{}",
+        source_lang, target_lang, docs_context, source
     );
 
     let body = json!({

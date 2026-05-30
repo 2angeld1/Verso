@@ -4,7 +4,7 @@ use std::sync::Arc;
 use tokio::sync::Semaphore;
 use walkdir::WalkDir;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct RepoRequest {
     pub repo_url: String,
     pub source_lang: String,
@@ -14,6 +14,7 @@ pub struct RepoRequest {
     pub cohere_key: Option<String>,
     pub gemini_model: Option<String>,
     pub cohere_model: Option<String>,
+    pub db: crate::db::DbPool,
 }
 
 #[derive(Debug, Serialize)]
@@ -138,6 +139,7 @@ pub async fn run(req: RepoRequest) -> Result<RepoResponse, String> {
         let req_cohere_key = req.cohere_key.clone();
         let req_gemini_model = req.gemini_model.clone();
         let req_cohere_model = req.cohere_model.clone();
+        let db_pool = req.db.clone();
         let permit = Arc::clone(&semaphore);
 
         let handle = tokio::spawn(async move {
@@ -150,6 +152,7 @@ pub async fn run(req: RepoRequest) -> Result<RepoResponse, String> {
                 req_cohere_key.as_deref(),
                 req_gemini_model.as_deref(),
                 req_cohere_model.as_deref(),
+                &db_pool,
             )
             .await
         });
@@ -201,6 +204,7 @@ async fn translate_file(
     cohere_key: Option<&str>,
     gemini_model: Option<&str>,
     cohere_model: Option<&str>,
+    db: &crate::db::DbPool,
 ) -> FileResult {
     let rel_path = path.to_string_lossy().to_string();
     let source = match std::fs::read_to_string(path) {
@@ -229,6 +233,7 @@ async fn translate_file(
         cohere_key: cohere_key.map(|s| s.to_string()),
         gemini_model: gemini_model.map(|s| s.to_string()),
         cohere_model: cohere_model.map(|s| s.to_string()),
+        db: db.clone(),
     };
 
     tracing::info!(path = %rel_path, "translating file");

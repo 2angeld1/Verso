@@ -76,3 +76,23 @@ Si necesitas hablar del proyecto con otros desarrolladores para validar la idea,
 
 **¿Por qué no robarán tu idea?**
 La ejecución lo es todo. Incluso explicando el concepto a alto nivel, la probabilidad de que otra persona invierta las cientos de horas necesarias para montar la infraestructura (IA, Rust, Caché, WebSockets, Diff Editor) es casi nula. ¡La ventaja competitiva ya la tienes tú!
+
+---
+
+## 5. Manejo de Objeciones: "Yo puedo hacer esto con Claude o ChatGPT de pago"
+
+Durante tus encuestas, es 100% seguro que escuches a desarrolladores decir: *"Eso ya lo hago copiando y pegando en Claude 3.5 Sonnet o GPT-4o."*
+
+**Tu respuesta debe centrarse en el "Context Window" y la Escalabilidad:**
+
+1. **El límite de memoria (Context Window):**
+   * *La objeción:* "Claude es muy inteligente."
+   * *El contraargumento de Verso:* Sí, Claude es excelente para 1, 5 o 10 archivos. Pero si tienes un proyecto heredado (Legacy) con 500 archivos y dependencias cruzadas, **no puedes meterlo todo en el chat de Claude**. Si lo haces poco a poco, Claude pierde el contexto de cómo se llamaban las variables en el archivo 1 cuando va por el archivo 50. Verso mapea la estructura completa del repositorio y mantiene la coherencia.
+
+2. **La trampa del Copy-Paste manual:**
+   * *La objeción:* "Lo hago poco a poco."
+   * *El contraargumento de Verso:* Migrar un proyecto grande "poco a poco" requiere que un desarrollador Senior (que cobra caro) pase semanas copiando código, pegándolo en el chat, esperando la respuesta, creando el archivo nuevo, pegando la respuesta y corrigiendo errores de formato. **Verso automatiza el pipeline completo**: lee el repositorio, traduce masivamente en paralelo, aplica reglas duras (Rust) y te devuelve la estructura de carpetas lista en minutos.
+
+3. **Determinismo vs. Alucinación:**
+   * *La objeción:* "La IA traduce bien la lógica."
+   * *El contraargumento de Verso:* La IA es probabilística, a veces se inventa librerías que no existen (alucina). Verso es **Híbrido**. Usa la IA para entender la semántica, pero pasa el resultado por un motor de reglas estrictas (Rust) para garantizar la correctitud sintáctica, y usa caché para que las funciones repetidas se traduzcan exactamente igual siempre. Claude no tiene reglas estrictas, solo adivina.

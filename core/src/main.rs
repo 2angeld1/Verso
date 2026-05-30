@@ -6,12 +6,15 @@ mod detect;
 mod cache;
 mod languages;
 mod parser;
+mod db;
 
 use axum::{Router, routing::{post, get}, Json, extract::State, http::StatusCode};
 use std::sync::Arc;
 use serde::Deserialize;
 
-struct AppState {}
+struct AppState {
+    db: db::DbPool,
+}
 
 #[derive(Deserialize)]
 struct TranslateRequest {
@@ -47,7 +50,8 @@ struct TranslateRepoRequest {
 async fn main() {
     tracing_subscriber::fmt::init();
 
-    let state = Arc::new(AppState {});
+    let db_pool = db::DbPool::init().await;
+    let state = Arc::new(AppState { db: db_pool });
 
     let app = Router::new()
         .route("/translate", post(handle_translate))
@@ -79,6 +83,7 @@ async fn handle_translate(
         cohere_key: req.cohere_key.or_else(|| std::env::var("COHERE_API_KEY").ok()),
         gemini_model: req.gemini_model,
         cohere_model: req.cohere_model,
+        db: _state.db.clone(),
     };
 
     match translate::run(internal_req).await {
@@ -103,6 +108,7 @@ async fn handle_translate_repo(
         cohere_key: req.cohere_key.or_else(|| std::env::var("COHERE_API_KEY").ok()),
         gemini_model: req.gemini_model,
         cohere_model: req.cohere_model,
+        db: _state.db.clone(),
     };
 
     match translate_repo::run(internal_req).await {
