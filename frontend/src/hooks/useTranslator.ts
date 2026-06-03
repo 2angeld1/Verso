@@ -19,6 +19,7 @@ export interface TranslatorState {
   sourceVersion: string
   targetVersion: string
   loading: boolean
+  loadingRecent: boolean
   submitting: boolean
   code: string
   repoUrl: string
@@ -31,7 +32,6 @@ export interface TranslatorState {
   compatibleTargets: string[]
   currentTarget: Language | null
   repoResult: RepoResult | null
-  wsStatus: WsStatus | null
 }
 
 export interface TranslatorActions {
@@ -61,6 +61,7 @@ export function useTranslator(): TranslatorState & TranslatorActions {
   const [sourceVersion, setSourceVersion] = useState('5.6')
   const [targetVersion, setTargetVersion] = useState('8.2')
   const [loading, setLoading] = useState(true)
+  const [loadingRecent, setLoadingRecent] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [code, setCode] = useState(PHP_CODE)
   const [repoUrl, setRepoUrl] = useState('')
@@ -192,6 +193,7 @@ export function useTranslator(): TranslatorState & TranslatorActions {
       })
       .then((data) => setRecent(data || []))
       .catch(() => setRecent([]))
+      .finally(() => setLoadingRecent(false))
   }, [])
 
   // Update code sample when language changes
@@ -319,7 +321,7 @@ export function useTranslator(): TranslatorState & TranslatorActions {
 
   return {
     languages, sourceLang, targetLang, sourceVersion, targetVersion,
-    loading, submitting, code, repoUrl, mode, translation, recent, copied,
+    loading, loadingRecent, submitting, code, repoUrl, mode, translation, recent, copied,
     isAutoDetect, currentSource, compatibleTargets, currentTarget, repoResult,
     wsStatus,
     setSourceLang, setTargetLang, setSourceVersion, setTargetVersion,
